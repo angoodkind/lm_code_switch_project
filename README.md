@@ -37,4 +37,10 @@ To run a single set of parameters, simply run `src/main.py` with parameter setti
 - `--log-interval` = report interval
 - `--save` = path where to save the final model
 
-To run a grid search on several parameters, all you need to do is edit the variables in `src/grid_search.py`, and then run that file.
+To run a grid search on several parameters, all you need to do is edit the variables in `src/grid_search.py`, and then run that file. Grid search has a couple of parameters configurable from the command line, too:
+
+* `--data` = location of the data corpus
+* `--condition_runs` = number of runs per condition (each run starts with a different random seed)
+* `--output_dir` = path to save results, including summary CSV and model checkpoint
+* `--summary_filename` = path to save summary CSV, within the results directory
+* `--cuda` = use CUDA
