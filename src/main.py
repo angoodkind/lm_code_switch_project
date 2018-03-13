@@ -205,7 +205,7 @@ def main(preset_args = False):
         model = torch.load(f)
 
     # Run on test data.
-    test_loss = evaluate(test_data)
+    test_loss = evaluate(corpus.test)
     print('=' * 89)
     print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
         test_loss, math.exp(test_loss)))
