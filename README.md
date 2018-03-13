@@ -16,7 +16,16 @@ Much of this code was based on:
 
 ## Preprocessing the data
 
-(still need to figure out how to do)
+Run `src/preprocess.py` on your corpus, with the following arguments. Note that this preprocessing code is intended to work with the [SEAME corpus](https://catalog.ldc.upenn.edu/LDC2015S04), which cannot be published here due to copyright reasons.
+
+- `--source_dir` = location of the data corpus (a directory with conversation transcripts)
+- `--train_prop` = proportion of corpus to use as training. The rest will be split evenly between testing and validation sets
+- `--output_dir` = where to save training/testing/validation splits, each as a CSV, where each line contains the following data:
+    1. Conversation ID
+    2. Speaker
+    3. Utterance
+
+Within a given conversation, all the lines are in order in the CSV.
 
 ## Running the experiment
 
