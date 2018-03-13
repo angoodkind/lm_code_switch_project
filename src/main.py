@@ -100,7 +100,7 @@ def main(preset_args = False):
         for convo in data_source.values():
             for data, targets in convo:
                 output, hidden = model(data, hidden)
-                output_flat = output.view(-1, ntokens)
+                output_flat = output.view(-1, 2)
                 total_loss += len(data) * criterion(output_flat, targets).data
                 hidden = repackage_hidden(hidden)
         return total_loss[0] / len(data_source)
