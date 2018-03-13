@@ -26,8 +26,6 @@ grid_args = {
     'data': gs_args.data,
     'model': ['LSTM', 'GRU'],
     'epochs': 40,
-    'batch_size': 35,
-    'bptt': 20,
     'emsize': [32, 64],
     'nhid': 256,
     'nlayers': 2,
