@@ -169,7 +169,7 @@ def main(preset_args = False):
             output_info['epoch'] = epoch
             output_info['train_loss'] = train_loss
             output_info['val_loss'] = val_loss
-            output_info['val_ppl'] = math.exp(val_loss)
+            output_info['val_ppl'] = val_loss
             output_info['epoch_time'] = time.time() - epoch_start_time
 
             print('-' * 89)
