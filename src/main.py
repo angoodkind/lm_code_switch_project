@@ -120,6 +120,10 @@ def main(preset_args = False):
             for data, targets in convo:
                 batch += 1
 
+                if args.cuda:
+                    data = data.cuda()
+                    targets = targets.cuda()
+
                 # Starting each batch, we detach the hidden state from how it was previously produced.
                 # If we didn't, the model would try backpropagating all the way to start of the dataset.
                 hidden = repackage_hidden(hidden)
