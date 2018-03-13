@@ -45,17 +45,17 @@ class RNNModel(nn.Module):
         unlogged_outputs = self.hidden2tag(rnn_output.view(len(sentence), -1))
         return unlogged_outputs, hidden
 
-    # def init_hidden(self, bsz = 1):
-    #     weight = next(self.parameters()).data
-    #     if self.rnn_type == 'LSTM':
-    #         return (Variable(weight.new(self.nlayers, bsz, self.nhid).zero_()),
-    #                 Variable(weight.new(self.nlayers, bsz, self.nhid).zero_()))
-    #     else:
-    #         return Variable(weight.new(self.nlayers, bsz, self.nhid).zero_())
-    def init_hidden(self):
-        # Before we've done anything, we dont have any hidden state.
-        # Refer to the Pytorch documentation to see exactly
-        # why they have this dimensionality.
-        # The axes semantics are (num_layers, minibatch_size, hidden_dim)
-        return (Variable(torch.zeros(1, 1, self.nhid)),
-                Variable(torch.zeros(1, 1, self.nhid)))
+    def init_hidden(self, bsz = 1):
+        weight = next(self.parameters()).data
+        if self.rnn_type == 'LSTM':
+            return (Variable(weight.new(self.nlayers, bsz, self.nhid).zero_()),
+                    Variable(weight.new(self.nlayers, bsz, self.nhid).zero_()))
+        else:
+            return Variable(weight.new(self.nlayers, bsz, self.nhid).zero_())
+    # def init_hidden(self):
+    #     # Before we've done anything, we dont have any hidden state.
+    #     # Refer to the Pytorch documentation to see exactly
+    #     # why they have this dimensionality.
+    #     # The axes semantics are (num_layers, minibatch_size, hidden_dim)
+    #     return (Variable(torch.zeros(1, 1, self.nhid)),
+    #             Variable(torch.zeros(1, 1, self.nhid)))
