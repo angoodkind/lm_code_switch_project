@@ -12,7 +12,6 @@ def main(preset_args = False):
     import model
     import csv
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
     parser.add_argument('--data', type=str, default='./data/seame',
