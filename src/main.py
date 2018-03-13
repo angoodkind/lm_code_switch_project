@@ -99,6 +99,9 @@ def main(preset_args = False):
         hidden = model.init_hidden()
         for convo in data_source.values():
             for data, targets in convo:
+                if args.cuda:
+                    data = data.cuda()
+                    targets = targets.cuda()
                 output, hidden = model(data, hidden)
                 output_flat = output.view(-1, 2)
                 total_loss += len(data) * criterion(output_flat, targets).data
