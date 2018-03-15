@@ -103,7 +103,7 @@ def main(preset_args = False):
         tp = 0
         fp = 0
         tn = 0
-        tp = 0
+        fn = 0
 
         for convo in data_source.values():
             for data, targets in convo:
