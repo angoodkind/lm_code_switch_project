@@ -115,9 +115,36 @@ def main(preset_args = False):
                 total_loss += len(data) * criterion(output_flat, targets).data
 
                 # for calculating F1
+                for i in range(hidden.size(0)):
+                    # prediction of code-switches
+                    target_pred_cs = (targets[i,0] < targets[i,1])
+                    output_pred_cs = (output[i,0] < output[i,1])
+                    if target_pred_cs:
+                        if output_pred_cs:
+                            tp += 1
+                        else:
+                            fn += 1
+                    else:
+                        if output_pred_cs:
+                            fp += 1
+                        else:
+                            tn += 1
 
                 hidden = repackage_hidden(hidden)
-        return total_loss[0] / len(data_source)
+
+            precision = tp / (tp + fp)
+            recall = tp / (tp + fn)
+            fscore = 2 * (precision * recall) / (precision + recall)
+            accuracy = (tp + tn) / (tp + tn + fp + fn)
+
+            results = {
+                'f': fscore,
+                'accuracy': accuracy,
+                'precision': precision,
+                'recall': recall,
+                'loss': total_loss[0] / len(data_source)
+            }
+        return results
 
 
     def train():
@@ -175,11 +202,16 @@ def main(preset_args = False):
         for epoch in range(1, args.epochs+1):
             epoch_start_time = time.time()
             train_loss = train()
-            val_loss = evaluate(corpus.valid)
+            val_results = evaluate(corpus.valid)
+            val_loss = val_results['loss']
 
             output_info['epoch'] = epoch
             output_info['train_loss'] = train_loss
             output_info['val_loss'] = val_loss
+            output_info['val_acc'] = val_results['accuracy']
+            output_info['val_prec'] = val_results['precision']
+            output_info['val_recall'] = val_results['recall']
+            output_info['val_f'] = val_results['f']
             output_info['epoch_time'] = time.time() - epoch_start_time
 
             print('-' * 89)
@@ -214,10 +246,10 @@ def main(preset_args = False):
         model = torch.load(f)
 
     # Run on test data.
-    test_loss = evaluate(corpus.test)
+    test_results = evaluate(corpus.test)
     print('=' * 89)
     print('| End of training | test loss {:5.2f}'.format(
-        test_loss))
+        test_results['loss']))
     print('=' * 89)
 
 if __name__ == '__main__':
