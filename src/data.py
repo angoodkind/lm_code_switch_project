@@ -58,16 +58,16 @@ class Corpus(object):
                 # input_tensor = torch.zeros(len(words), 1, len(self.speakers) + len(self.dictionary))
                 input_sentence = torch.autograd.Variable(torch.LongTensor(enc_words))
                 # input_sentence = torch.autograd.Variable(torch.LongTensor(4,5))
-                output_classes = torch.LongTensor(len(enc_words))
+                output_classes = torch.LongTensor(len(enc_words), 2).zero_()
                 # output_tensor = torch.zeros(len(words), 1, 2)
                 for w, word_idx in enumerate(enc_words):
                 #     input_tensor[w][0][speaker_id] = 1 # encode speaker id
                 #     input_tensor[w][0][len(self.speakers) + word_idx] # encode word identity
                     # check for code-switches
                     if words[w] == '<eos>' or re.search(chinese_chars, words[w+1]) == re.search(chinese_chars, words[w]):
-                        output_classes[w] = 0
+                        output_classes[w, 0] = 1
                     else: # code switch detected!
-                        output_classes[w] = 1
+                        output_classes[w, 1] = 1
 
                 # convos[line[0]].append((torch.LongTensor(input_tensor), torch.LongTensor(output_tensor)))
                 convos[line[0]].append((input_sentence, torch.autograd.Variable(output_classes)))

@@ -12,6 +12,7 @@ def main(preset_args = False):
     import model
     import csv
     import os
+    # import sys
 
     parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
     parser.add_argument('--data', type=str, default='./data/seame',
@@ -97,6 +98,13 @@ def main(preset_args = False):
         total_loss = 0
         ntokens = len(corpus.dictionary)
         hidden = model.init_hidden()
+
+        # for calculating F1
+        tp = 0
+        fp = 0
+        tn = 0
+        tp = 0
+
         for convo in data_source.values():
             for data, targets in convo:
                 if args.cuda:
@@ -105,6 +113,9 @@ def main(preset_args = False):
                 output, hidden = model(data, hidden)
                 output_flat = output.view(-1, 2)
                 total_loss += len(data) * criterion(output_flat, targets).data
+
+                # for calculating F1
+
                 hidden = repackage_hidden(hidden)
         return total_loss[0] / len(data_source)
 
@@ -169,12 +180,10 @@ def main(preset_args = False):
             output_info['epoch'] = epoch
             output_info['train_loss'] = train_loss
             output_info['val_loss'] = val_loss
-            output_info['val_ppl'] = val_loss
             output_info['epoch_time'] = time.time() - epoch_start_time
 
             print('-' * 89)
-            print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} '.format(epoch, (time.time() - epoch_start_time),
-                                               val_loss))
+            print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} '.format(epoch, (time.time() - epoch_start_time),val_loss))
             print('-' * 89)
 
             # add checkpoint to summary file
@@ -207,8 +216,8 @@ def main(preset_args = False):
     # Run on test data.
     test_loss = evaluate(corpus.test)
     print('=' * 89)
-    print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
-        test_loss, math.exp(test_loss)))
+    print('| End of training | test loss {:5.2f}'.format(
+        test_loss))
     print('=' * 89)
 
 if __name__ == '__main__':
