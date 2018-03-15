@@ -28,7 +28,7 @@ grid_args = {
     'epochs': 40,
     'emsize': [500, 2000],
     'nhid': [32, 64],
-    'nlayers': 1,
+    'nlayers': [1, 2],
     'lr': 20,
     'clip': 5,
     'cuda': gs_args.cuda,
