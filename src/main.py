@@ -115,7 +115,7 @@ def main(preset_args = False):
                 total_loss += len(data) * criterion(output_flat, targets).data
 
                 # for calculating F1
-                for i in range(hidden.size(0)):
+                for i in range(output.size(0)):
                     # prediction of code-switches
                     target_pred_cs = (targets[i] == 0)
                     output_pred_cs = (output[i,0] > output[i,1])
