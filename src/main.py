@@ -117,8 +117,8 @@ def main(preset_args = False):
                 # for calculating F1
                 for i in range(hidden.size(0)):
                     # prediction of code-switches
-                    target_pred_cs = (targets[i,0] < targets[i,1])
-                    output_pred_cs = (output[i,0] < output[i,1])
+                    target_pred_cs = (targets[i] == 0)
+                    output_pred_cs = (output[i,0] > output[i,1])
                     if target_pred_cs:
                         if output_pred_cs:
                             tp += 1
