@@ -1,1 +1,4 @@
 src/__pycache__/*
+.Rproj.user
+_/
+data/seame/
