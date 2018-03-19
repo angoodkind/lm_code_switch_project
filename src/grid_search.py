@@ -14,6 +14,8 @@ parser.add_argument('--summary_filename', type=str, default='summary.txt',
                     help='path to save summary CSV, within results directory')
 parser.add_argument('--cuda', action='store_true',
                     help='Whether to use CUDA')
+parser.add_argument('--start_condition', type=int, default=0,
+                    help='Which condition number to start at')
 gs_args = parser.parse_args()
 
 condition_runs = gs_args.condition_runs
@@ -28,7 +30,7 @@ grid_args = {
     'epochs': 40,
     'emsize': [500, 2000],
     'nhid': [32, 64],
-    'nlayers': [1, 2],
+    'nlayers': 2,
     'lr': 20,
     'clip': 5,
     'cuda': gs_args.cuda,
@@ -49,11 +51,12 @@ def conditions(grid_args):
 
 # generate and run conditions
 for c, condition in enumerate(conditions(grid_args)):
+    condition_index = c + args.start_condition
     for run in range(condition_runs):
         condition['seed'] = run # use a randomly-generated seed instead?
         condition['run'] = run
-        condition['condition'] = c
-        condition['save'] = os.path.join(results_dir, str(c) + '-' + str(run) + '.pt')
+        condition['condition'] = condition_index
+        condition['save'] = os.path.join(results_dir, str(condition_index) + '-' + str(run) + '.pt')
 
         # could potentially parallelize here to run multiple runs at the same time?
         main.main(condition)
