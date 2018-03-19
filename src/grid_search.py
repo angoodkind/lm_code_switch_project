@@ -51,7 +51,7 @@ def conditions(grid_args):
 
 # generate and run conditions
 for c, condition in enumerate(conditions(grid_args)):
-    condition_index = c + args.start_condition
+    condition_index = c + gs_args.start_condition
     for run in range(condition_runs):
         condition['seed'] = run # use a randomly-generated seed instead?
         condition['run'] = run
