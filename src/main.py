@@ -132,9 +132,14 @@ def main(preset_args = False):
 
                 hidden = repackage_hidden(hidden)
 
-            precision = tp / (tp + fp)
-            recall = tp / (tp + fn)
-            fscore = 2 * (precision * recall) / (precision + recall)
+            if tp == 0: # prevent divide-by-zero errors
+                precision = 0
+                recall = 0
+                fscore = 0
+            else:
+                precision = tp / (tp + fp)
+                recall = tp / (tp + fn)
+                fscore = 2 * (precision * recall) / (precision + recall)
             accuracy = (tp + tn) / (tp + tn + fp + fn)
 
             results = {
