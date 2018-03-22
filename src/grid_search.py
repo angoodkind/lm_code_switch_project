@@ -30,8 +30,8 @@ grid_args = {
     'epochs': 40,
     'emsize': [500, 2000],
     'nhid': [32, 64],
-    'nlayers': 2,
-    'lr': 20,
+    'nlayers': [1, 2],
+    'lr': 0.1,
     'clip': 5,
     'cuda': gs_args.cuda,
     'summary': os.path.join(results_dir, gs_args.summary_filename)

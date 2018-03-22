@@ -25,7 +25,7 @@ def main(preset_args = False):
                         help='number of hidden units per layer')
     parser.add_argument('--nlayers', type=int, default=2,
                         help='number of layers')
-    parser.add_argument('--lr', type=float, default=20,
+    parser.add_argument('--lr', type=float, default=0.1,
                         help='initial learning rate')
     parser.add_argument('--clip', type=float, default=0.25,
                         help='gradient clipping')
@@ -162,7 +162,10 @@ def main(preset_args = False):
         loss_hist = []
         batch = 0
         n_batches = len(corpus.train.values()) # each conversation is a single batch
-        print(n_batches)
+
+        # set the optimizer
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+
         for convo_id, convo in corpus.train.items():
 
             data = convo['input']
@@ -177,15 +180,16 @@ def main(preset_args = False):
             # Starting each batch, we detach the hidden state from how it was previously produced.
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
             hidden = repackage_hidden(hidden)
-            model.zero_grad()
+            optimizer.zero_grad() # zero out the gradients on the parameters
             output, hidden = model(data[0], hidden)
             loss = criterion(output.view(-1, 2), targets)
             loss.backward()
 
             # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
             torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
-            for p in model.parameters():
-                p.data.add_(-lr, p.grad.data)
+
+            # use SGD to take a step
+            optimizer.step()
 
             total_loss += loss.data
             loss_hist.append(loss.data[0])
