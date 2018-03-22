@@ -25,7 +25,7 @@ def main(preset_args = False):
                         help='number of hidden units per layer')
     parser.add_argument('--nlayers', type=int, default=2,
                         help='number of layers')
-    parser.add_argument('--lr', type=float, default=20,
+    parser.add_argument('--lr', type=float, default=0.1,
                         help='initial learning rate')
     parser.add_argument('--clip', type=float, default=0.25,
                         help='gradient clipping')
@@ -166,7 +166,7 @@ def main(preset_args = False):
         n_batches = len(corpus.train.values()) # each conversation is a single batch
 
         # set the optimizer
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
         for convo_id, convo in corpus.train.items():
 
