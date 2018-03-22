@@ -37,7 +37,7 @@ def main(preset_args = False):
                         help='random seed')
     parser.add_argument('--cuda', action='store_true',
                         help='use CUDA')
-    parser.add_argument('--log-interval', type=int, default=200, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=5, metavar='N',
                         help='report interval')
     parser.add_argument('--save', type=str,  default='model.pt',
                         help='path to save the final model')
@@ -47,6 +47,8 @@ def main(preset_args = False):
                         help='Condition referenced in summary CSV')
     parser.add_argument('--run', type=int, default=0,
                         help='Run within condition')
+    parser.add_argument('--ignore_speaker', action='store_true',
+                        help='Do not take speaker information into account')
     args, unknown = parser.parse_known_args()
     output_info = vars(args) # this is the variable to use for outputting checkpoints
 
@@ -176,6 +178,10 @@ def main(preset_args = False):
             if args.cuda:
                 data = data.cuda()
                 targets = targets.cuda()
+
+            # zero out speaker information if that flag is set
+            if args.ignore_speaker:
+                data.data[1].zero_()
 
             # Starting each batch, we detach the hidden state from how it was previously produced.
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
