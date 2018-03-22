@@ -26,12 +26,12 @@ if not os.path.exists(results_dir):
 
 grid_args = {
     'data': gs_args.data,
-    'model': ['LSTM', 'GRU'],
+    'model': 'LSTM',
     'epochs': 40,
     'emsize': [500, 2000],
     'nhid': [32, 64],
     'nlayers': [1, 2],
-    'ignore_speaker': [False, True]
+    'ignore_speaker': True,
     'lr': 20,
     'clip': 5,
     'cuda': gs_args.cuda,
