@@ -8,9 +8,8 @@ class RNNModel(nn.Module):
     def __init__(self, rnn_type, n_speakers, vocab_size, embedding_dim, hidden_dim, n_classes, n_layers, dropout=0.5):
         super(RNNModel, self).__init__()
         self.drop = nn.Dropout(dropout)
-        # self.encoder = nn.Embedding(n_speakers + vocab_size, embedding_dim)
-        self.word_encoder = nn.Embedding(vocab_size, embedding_dim // 2)
-        self.spkr_encoder = nn.Embedding(n_speakers, embedding_dim // 2)
+        self.word_encoder = nn.Embedding(vocab_size, embedding_dim)
+        self.spkr_encoder = nn.Embedding(n_speakers, embedding_dim)
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn = getattr(nn, rnn_type)(embedding_dim, hidden_dim, n_layers, dropout=dropout)
         else:
@@ -44,8 +43,8 @@ class RNNModel(nn.Module):
         # hidden is an external variable here, so it can be reset outside the model
         word_emb = self.drop(self.word_encoder(input_data[0]))
         spkr_emb = self.drop(self.spkr_encoder(input_data[1]))
-        # concatenate word and speaker information
-        emb = torch.cat((word_emb, spkr_emb), 1)
+        # add word and speaker information
+        emb = word_emb + spkr_emb
 
         rnn_output, hidden = self.rnn(emb.view(emb.size(0), 1, -1), hidden)
         rnn_output = self.drop(rnn_output)
