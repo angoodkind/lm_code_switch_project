@@ -31,7 +31,7 @@ grid_args = {
     'emsize': [500, 2000],
     'nhid': [32, 64],
     'nlayers': [1, 2],
-    'lr': 0.1,
+    'lr': 20,
     'clip': 5,
     'cuda': gs_args.cuda,
     'summary': os.path.join(results_dir, gs_args.summary_filename)

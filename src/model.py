@@ -8,7 +8,9 @@ class RNNModel(nn.Module):
     def __init__(self, rnn_type, n_speakers, vocab_size, embedding_dim, hidden_dim, n_classes, n_layers, dropout=0.5):
         super(RNNModel, self).__init__()
         self.drop = nn.Dropout(dropout)
-        self.encoder = nn.Embedding(n_speakers + vocab_size, embedding_dim)
+        # self.encoder = nn.Embedding(n_speakers + vocab_size, embedding_dim)
+        self.word_encoder = nn.Embedding(vocab_size, embedding_dim // 2)
+        self.spkr_encoder = nn.Embedding(n_speakers, embedding_dim // 2)
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn = getattr(nn, rnn_type)(embedding_dim, hidden_dim, n_layers, dropout=dropout)
         else:
@@ -33,16 +35,21 @@ class RNNModel(nn.Module):
 
     def init_weights(self):
         initrange = 0.1
-        self.encoder.weight.data.uniform_(-initrange, initrange)
+        self.word_encoder.weight.data.uniform_(-initrange, initrange)
+        self.spkr_encoder.weight.data.uniform_(-initrange, initrange)
         self.hidden2tag.bias.data.fill_(0)
         self.hidden2tag.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, sentence, hidden):
+    def forward(self, input_data, hidden):
         # hidden is an external variable here, so it can be reset outside the model
-        emb = self.drop(self.encoder(sentence))
-        rnn_output, hidden = self.rnn(emb.view(len(sentence), 1, -1), hidden)
+        word_emb = self.drop(self.word_encoder(input_data[0]))
+        spkr_emb = self.drop(self.spkr_encoder(input_data[1]))
+        # concatenate word and speaker information
+        emb = torch.cat((word_emb, spkr_emb), 1)
+
+        rnn_output, hidden = self.rnn(emb.view(emb.size(0), 1, -1), hidden)
         rnn_output = self.drop(rnn_output)
-        unlogged_outputs = self.hidden2tag(rnn_output.view(len(sentence), -1))
+        unlogged_outputs = self.hidden2tag(rnn_output.view(emb.size(0), -1))
         return unlogged_outputs, hidden
 
     def init_hidden(self, bsz = 1):

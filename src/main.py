@@ -25,7 +25,7 @@ def main(preset_args = False):
                         help='number of hidden units per layer')
     parser.add_argument('--nlayers', type=int, default=2,
                         help='number of layers')
-    parser.add_argument('--lr', type=float, default=0.1,
+    parser.add_argument('--lr', type=float, default=20,
                         help='initial learning rate')
     parser.add_argument('--clip', type=float, default=0.25,
                         help='gradient clipping')
@@ -73,8 +73,8 @@ def main(preset_args = False):
     ###############################################################################
 
     ntokens = len(corpus.dictionary)
-    nspeakers = 0 # don't include speaker information for now
-    model = model.RNNModel(args.model, ntokens, nspeakers, args.emsize, args.nhid, 2, args.nlayers, args.dropout)
+    nspeakers = len(corpus.speakers)
+    model = model.RNNModel(args.model, nspeakers, ntokens, args.emsize, args.nhid, 2, args.nlayers, args.dropout)
     if args.cuda:
         model.cuda()
 
@@ -116,7 +116,7 @@ def main(preset_args = False):
             # words = data[0]
             # speaker = data[1]
 
-            output, hidden = model(data[0], hidden)
+            output, hidden = model(data, hidden)
             output_flat = output.view(-1, 2)
             total_loss += len(data) * criterion(output_flat, targets).data
 
@@ -181,7 +181,7 @@ def main(preset_args = False):
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
             hidden = repackage_hidden(hidden)
             optimizer.zero_grad() # zero out the gradients on the parameters
-            output, hidden = model(data[0], hidden)
+            output, hidden = model(data, hidden)
             loss = criterion(output.view(-1, 2), targets)
             loss.backward()
 
