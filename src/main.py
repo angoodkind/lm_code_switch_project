@@ -68,7 +68,6 @@ def main(preset_args = False):
 
     corpus = data.Corpus(args.data)
 
-
     ###############################################################################
     # Build the model
     ###############################################################################
@@ -106,49 +105,50 @@ def main(preset_args = False):
         fn = 0
 
         for convo in data_source.values():
-            for data, targets in convo:
-                if args.cuda:
-                    data = data.cuda()
-                    targets = targets.cuda()
-                output, hidden = model(data, hidden)
-                output_flat = output.view(-1, 2)
-                total_loss += len(data) * criterion(output_flat, targets).data
 
-                # for calculating F1
-                for i in range(output.size(0)):
-                    # prediction of code-switches
-                    target_pred_cs = (targets.data[i] == 0)
-                    output_pred_cs = (output.data[i,0] > output.data[i,1])
-                    if target_pred_cs:
-                        if output_pred_cs:
-                            tp += 1
-                        else:
-                            fn += 1
-                    else:
-                        if output_pred_cs:
-                            fp += 1
-                        else:
-                            tn += 1
+            data = convo['input']
+            targets = convo['target']
 
-                hidden = repackage_hidden(hidden)
+            if args.cuda:
+                data = data.cuda()
+                targets = targets.cuda()
 
-            if tp == 0: # prevent divide-by-zero errors
-                precision = 0
-                recall = 0
-                fscore = 0
-            else:
-                precision = tp / (tp + fp)
-                recall = tp / (tp + fn)
-                fscore = 2 * (precision * recall) / (precision + recall)
-            accuracy = (tp + tn) / (tp + tn + fp + fn)
+            # words = data[0]
+            # speaker = data[1]
 
-            results = {
-                'f': fscore,
-                'accuracy': accuracy,
-                'precision': precision,
-                'recall': recall,
-                'loss': total_loss[0] / len(data_source)
-            }
+            output, hidden = model(data[0], hidden)
+            output_flat = output.view(-1, 2)
+            total_loss += len(data) * criterion(output_flat, targets).data
+
+            # for calculating F1
+            target_preds = targets.data
+            model_preds = torch.max(output.data, 1)[1]
+            preds_eq = torch.eq(target_preds, model_preds).type_as(model_preds)
+
+            tp += torch.sum(torch.eq(target_preds, preds_eq))
+            fn += torch.sum(torch.gt(target_preds, model_preds))
+            fp += torch.sum(torch.gt(model_preds, target_preds))
+            tn += torch.sum(torch.gt(preds_eq, target_preds))
+
+            hidden = repackage_hidden(hidden)
+
+        if tp == 0: # prevent divide-by-zero errors
+            precision = 0
+            recall = 0
+            fscore = 0
+        else:
+            precision = tp / (tp + fp)
+            recall = tp / (tp + fn)
+            fscore = 2 * (precision * recall) / (precision + recall)
+        accuracy = (tp + tn) / (tp + tn + fp + fn)
+
+        results = {
+            'f': fscore,
+            'accuracy': accuracy,
+            'precision': precision,
+            'recall': recall,
+            'loss': total_loss[0] / len(data_source)
+        }
         return results
 
 
@@ -161,40 +161,44 @@ def main(preset_args = False):
         hidden = model.init_hidden()
         loss_hist = []
         batch = 0
-        n_batches = sum([len(c) for c in corpus.train.values()])
-        for convo in corpus.train.values():
-            for data, targets in convo:
-                batch += 1
+        n_batches = len(corpus.train.values()) # each conversation is a single batch
+        print(n_batches)
+        for convo_id, convo in corpus.train.items():
 
-                if args.cuda:
-                    data = data.cuda()
-                    targets = targets.cuda()
+            data = convo['input']
+            targets = convo['target']
 
-                # Starting each batch, we detach the hidden state from how it was previously produced.
-                # If we didn't, the model would try backpropagating all the way to start of the dataset.
-                hidden = repackage_hidden(hidden)
-                model.zero_grad()
-                output, hidden = model(data, hidden)
-                loss = criterion(output.view(-1, 2), targets)
-                loss.backward()
+            batch += 1
 
-                # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-                torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
-                for p in model.parameters():
-                    p.data.add_(-lr, p.grad.data)
+            if args.cuda:
+                data = data.cuda()
+                targets = targets.cuda()
 
-                total_loss += loss.data
-                loss_hist.append(loss.data[0])
+            # Starting each batch, we detach the hidden state from how it was previously produced.
+            # If we didn't, the model would try backpropagating all the way to start of the dataset.
+            hidden = repackage_hidden(hidden)
+            model.zero_grad()
+            output, hidden = model(data[0], hidden)
+            loss = criterion(output.view(-1, 2), targets)
+            loss.backward()
 
-                if batch % args.log_interval == 0 and batch > 0:
-                    cur_loss = total_loss[0] / args.log_interval
-                    elapsed = time.time() - start_time
-                    print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                            'loss {:5.2f} | ppl {:8.2f}'.format(
-                        epoch, batch, n_batches, lr,
-                        elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
-                    total_loss = 0
-                    start_time = time.time()
+            # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+            torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
+            for p in model.parameters():
+                p.data.add_(-lr, p.grad.data)
+
+            total_loss += loss.data
+            loss_hist.append(loss.data[0])
+
+            if batch % args.log_interval == 0 and batch > 0:
+                cur_loss = total_loss[0] / args.log_interval
+                elapsed = time.time() - start_time
+                print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
+                        'loss {:5.2f} | ppl {:8.2f}'.format(
+                    epoch, batch, n_batches, lr,
+                    elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+                total_loss = 0
+                start_time = time.time()
 
         return sum(loss_hist) / len(loss_hist)
 

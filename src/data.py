@@ -29,45 +29,64 @@ class Corpus(object):
     def tokenize(self, path):
         """Get the data into word-target pairs for each sentence."""
         assert os.path.exists(path)
-        # Add words to the dictionary
+
         convo_lengths = {}
+        convos = {}
+
+        # for checking whether a word is Chinese or English, later
+        chinese_chars = re.compile(u'[⺀-⺙⺛-⻳⼀-⿕々〇〡-〩〸-〺〻㐀-䶵一-鿃豈-鶴侮-頻並-龎]', re.UNICODE)
+
         with open(path, 'r') as f:
             r = csv.reader(f)
+            convo_id = None
             for line in r:
+                # reset convo
+                if line[0] != convo_id:
+                    # wrap up stuff from previous convo
+                    if convo_id:
+                        # create Variables from existing vectors
+                        # input_complete: Variable of dimensionality 2 x (number of words in sentence)
+                        input_complete = torch.autograd.Variable(torch.LongTensor([enc_words, speaker_tags]))
+                        # output_classes
+                        output_classes = torch.autograd.Variable(torch.LongTensor(output_classes))
+
+
+                        convos[convo_id] = {
+                            'input': input_complete,
+                            'target': output_classes
+                        }
+
+                    convo_id = line[0]
+                    enc_words = []
+                    speaker_tags = []
+                    output_classes = []
+                    convo_lengths[convo_id] = []
+
+                # split words into a list for processing
                 words = line[2].split() + ['<eos>']
-                # keep track of number of words in conversation
-                if not line[0] in convo_lengths:
-                    convo_lengths[line[0]] = []
-                convo_lengths[line[0]].append(len(words))
+
+                # keep track of lengths
+                convo_lengths[convo_id].append(len(words))
+
+                # add words to dictionary
                 for word in words:
                     self.dictionary.add_word(word)
                 self.speakers.add_word(line[1]) # build up speaker dictionary too
 
-        convos = {k : [] for k in convo_lengths.keys()}
-
-        chinese_chars = re.compile(u'[⺀-⺙⺛-⻳⼀-⿕々〇〡-〩〸-〺〻㐀-䶵一-鿃豈-鶴侮-頻並-龎]', re.UNICODE)
-
-        # Tokenize file content
-        with open(path, 'r') as f:
-            r = csv.reader(f)
-            for line in r:
-                words = line[2].split() + ['<eos>']
+                # encode both speaker tags and words
+                enc_words += [self.dictionary.word2idx[word] for word in words]
                 speaker_id = self.speakers.word2idx[line[1]]
-                enc_words = [self.dictionary.word2idx[word] for word in words]
+                speaker_tags += [speaker_id for word in words]
 
-                # input_tensor = torch.zeros(len(words), 1, len(self.speakers) + len(self.dictionary))
-                input_sentence = torch.autograd.Variable(torch.LongTensor(enc_words))
-                # input_sentence = torch.autograd.Variable(torch.LongTensor(4,5))
-                output_classes = torch.LongTensor(len(enc_words)).zero_()
-                # output_tensor = torch.zeros(len(words), 1, 2)
-                for w, word_idx in enumerate(enc_words):
-                #     input_tensor[w][0][speaker_id] = 1 # encode speaker id
-                #     input_tensor[w][0][len(self.speakers) + word_idx] # encode word identity
+                # figure out output classes
+                # 0 = no codeswitch | 1 = codeswitch
+                this_output = [1 for word in words]
+                for w, word in enumerate(words):
                     # check for code-switches
-                    if words[w] == '<eos>' or re.search(chinese_chars, words[w+1]) == re.search(chinese_chars, words[w]):
-                        output_classes[w] = 1 # no code-switch
+                    if word == '<eos>' or re.search(chinese_chars, words[w+1]) == re.search(chinese_chars, word):
+                        this_output[w] = 0 # no code-switch
 
-                # convos[line[0]].append((torch.LongTensor(input_tensor), torch.LongTensor(output_tensor)))
-                convos[line[0]].append((input_sentence, torch.autograd.Variable(output_classes)))
+                output_classes += this_output
+
 
         return convos
