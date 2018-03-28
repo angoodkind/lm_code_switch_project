@@ -12,7 +12,7 @@ def main(preset_args = False):
     import model
     import csv
     import os
-    # import sys
+    import sys
 
     parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
     parser.add_argument('--data', type=str, default='./data/seame',
@@ -49,6 +49,8 @@ def main(preset_args = False):
                         help='Run within condition')
     parser.add_argument('--ignore_speaker', action='store_true',
                         help='Do not take speaker information into account')
+    parser.add_argument('--full_context', action='store_true',
+                        help='condition only on the current line')
     args, unknown = parser.parse_known_args()
     output_info = vars(args) # this is the variable to use for outputting checkpoints
 
@@ -106,33 +108,43 @@ def main(preset_args = False):
         tn = 0
         fn = 0
 
-        for convo in data_source.values():
+        for convo_id, convo in corpus.train.items():
 
-            data = convo['input']
-            targets = convo['target']
+            # split the data by line, if necessary
+            split_data = []
+            if args.full_context:
+                split_data.append((convo['input'], convo['target']))
+            else:
+                cur_idx = 0
+                for line_length in corpus.train_lengths[convo_id]:
+                    split_data.append((convo['input'][:,cur_idx:cur_idx+line_length], convo['target'][cur_idx:cur_idx+line_length]))
+                    cur_idx += line_length
 
-            if args.cuda:
-                data = data.cuda()
-                targets = targets.cuda()
 
-            # words = data[0]
-            # speaker = data[1]
+            for data, targets in split_data:
 
-            output, hidden = model(data, hidden)
-            output_flat = output.view(-1, 2)
-            total_loss += len(data) * criterion(output_flat, targets).data
+                data = torch.autograd.Variable(data)
+                targets = torch.autograd.Variable(targets)
 
-            # for calculating F1
-            target_preds = targets.data
-            model_preds = torch.max(output.data, 1)[1]
-            preds_eq = torch.eq(target_preds, model_preds).type_as(model_preds)
+                if args.cuda:
+                    data = data.cuda()
+                    targets = targets.cuda()
 
-            tp += torch.sum(torch.eq(target_preds, preds_eq))
-            fn += torch.sum(torch.gt(target_preds, model_preds))
-            fp += torch.sum(torch.gt(model_preds, target_preds))
-            tn += torch.sum(torch.gt(preds_eq, target_preds))
+                output, hidden = model(data, hidden)
+                output_flat = output.view(-1, 2)
+                total_loss += len(data) * criterion(output_flat, targets).data
 
-            hidden = repackage_hidden(hidden)
+                # for calculating F1
+                target_preds = targets.data
+                model_preds = torch.max(output.data, 1)[1]
+                preds_eq = torch.eq(target_preds, model_preds).type_as(model_preds)
+
+                tp += torch.sum(torch.eq(target_preds, preds_eq))
+                fn += torch.sum(torch.gt(target_preds, model_preds))
+                fp += torch.sum(torch.gt(model_preds, target_preds))
+                tn += torch.sum(torch.gt(preds_eq, target_preds))
+
+                hidden = repackage_hidden(hidden)
 
         if tp == 0: # prevent divide-by-zero errors
             precision = 0
@@ -163,52 +175,68 @@ def main(preset_args = False):
         hidden = model.init_hidden()
         loss_hist = []
         batch = 0
-        n_batches = len(corpus.train.values()) # each conversation is a single batch
+        if args.full_context:
+            n_batches = len(corpus.train.values()) # each conversation is a single batch
+        else:
+            n_batches = sum([len(x) for x in corpus.train_lengths.values()])
 
         # set the optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
         for convo_id, convo in corpus.train.items():
 
-            data = convo['input']
-            targets = convo['target']
+            # split the data by line, if necessary
+            split_data = []
+            if args.full_context:
+                split_data.append((convo['input'], convo['target']))
+            else:
+                cur_idx = 0
+                for line_length in corpus.train_lengths[convo_id]:
+                    split_data.append((convo['input'][:,cur_idx:cur_idx+line_length], convo['target'][cur_idx:cur_idx+line_length]))
+                    cur_idx += line_length
 
-            batch += 1
 
-            if args.cuda:
-                data = data.cuda()
-                targets = targets.cuda()
+            for data, targets in split_data:
 
-            # zero out speaker information if that flag is set
-            if args.ignore_speaker:
-                data.data[1].zero_()
+                batch += 1
 
-            # Starting each batch, we detach the hidden state from how it was previously produced.
-            # If we didn't, the model would try backpropagating all the way to start of the dataset.
-            hidden = repackage_hidden(hidden)
-            optimizer.zero_grad() # zero out the gradients on the parameters
-            output, hidden = model(data, hidden)
-            loss = criterion(output.view(-1, 2), targets)
-            loss.backward()
+                data = torch.autograd.Variable(data)
+                targets = torch.autograd.Variable(targets)
 
-            # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-            torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
+                if args.cuda:
+                    data = data.cuda()
+                    targets = targets.cuda()
 
-            # use SGD to take a step
-            optimizer.step()
+                # zero out speaker information if that flag is set
+                if args.ignore_speaker:
+                    data.data[1].zero_()
 
-            total_loss += loss.data
-            loss_hist.append(loss.data[0])
+                # Starting each batch, we detach the hidden state from how it was previously produced.
+                # If we didn't, the model would try backpropagating all the way to start of the dataset.
+                hidden = repackage_hidden(hidden)
+                optimizer.zero_grad() # zero out the gradients on the parameters
+                output, hidden = model(data, hidden)
+                loss = criterion(output.view(-1, 2), targets)
+                loss.backward()
 
-            if batch % args.log_interval == 0 and batch > 0:
-                cur_loss = total_loss[0] / args.log_interval
-                elapsed = time.time() - start_time
-                print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                        'loss {:5.2f} | ppl {:8.2f}'.format(
-                    epoch, batch, n_batches, lr,
-                    elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
-                total_loss = 0
-                start_time = time.time()
+                # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+                torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
+
+                # use SGD to take a step
+                optimizer.step()
+
+                total_loss += loss.data
+                loss_hist.append(loss.data[0])
+
+                if batch % args.log_interval == 0 and batch > 0:
+                    cur_loss = total_loss[0] / args.log_interval
+                    elapsed = time.time() - start_time
+                    print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
+                            'loss {:5.2f} | ppl {:8.2f}'.format(
+                        epoch, batch, n_batches, lr,
+                        elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+                    total_loss = 0
+                    start_time = time.time()
 
         return sum(loss_hist) / len(loss_hist)
 

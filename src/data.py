@@ -22,9 +22,9 @@ class Corpus(object):
     def __init__(self, path):
         self.dictionary = Dictionary()
         self.speakers = Dictionary()
-        self.train = self.tokenize(os.path.join(path, 'train.csv'))
-        self.valid = self.tokenize(os.path.join(path, 'valid.csv'))
-        self.test = self.tokenize(os.path.join(path, 'test.csv'))
+        self.train, self.train_lengths = self.tokenize(os.path.join(path, 'train.csv'))
+        self.valid, self.valid_lengths = self.tokenize(os.path.join(path, 'valid.csv'))
+        self.test, self.test_lengths = self.tokenize(os.path.join(path, 'test.csv'))
 
     def tokenize(self, path):
         """Get the data into word-target pairs for each sentence."""
@@ -46,9 +46,9 @@ class Corpus(object):
                     if convo_id:
                         # create Variables from existing vectors
                         # input_complete: Variable of dimensionality 2 x (number of words in sentence)
-                        input_complete = torch.autograd.Variable(torch.LongTensor([enc_words, speaker_tags]))
+                        input_complete = torch.LongTensor([enc_words, speaker_tags])
                         # output_classes
-                        output_classes = torch.autograd.Variable(torch.LongTensor(output_classes))
+                        output_classes = torch.LongTensor(output_classes)
 
 
                         convos[convo_id] = {
@@ -89,4 +89,4 @@ class Corpus(object):
                 output_classes += this_output
 
 
-        return convos
+        return convos, convo_lengths
