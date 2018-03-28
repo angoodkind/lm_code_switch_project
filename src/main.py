@@ -21,13 +21,13 @@ def main(preset_args = False):
                         help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
     parser.add_argument('--emsize', type=int, default=200,
                         help='size of word embeddings')
-    parser.add_argument('--nhid', type=int, default=200,
+    parser.add_argument('--nhid', type=int, default=64,
                         help='number of hidden units per layer')
     parser.add_argument('--nlayers', type=int, default=2,
-                        help='number of layers')
+                        help='number of recurrent layers')
     parser.add_argument('--lr', type=float, default=0.1,
                         help='initial learning rate')
-    parser.add_argument('--clip', type=float, default=0.25,
+    parser.add_argument('--clip', type=float, default=0.5,
                         help='gradient clipping')
     parser.add_argument('--epochs', type=int, default=40,
                         help='upper epoch limit')
