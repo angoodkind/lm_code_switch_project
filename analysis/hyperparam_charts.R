@@ -23,8 +23,8 @@ ggplot(param.summ, aes(x=epoch, y=val_acc, color=emsize, group=interaction(condi
        x='Number of epochs',
        y='Accuracy on validation set') +
   theme(plot.title = element_text(hjust = 0.5)) +
-  # ggsave('epoch-val_acc_facets.pdf', device='pdf')
-  ggsave('epoch-val_acc_facets.jpeg', device='jpeg')
+  # ggsave('analysis/epoch-val_acc_facets.pdf', device='pdf')
+  ggsave('analysis/epoch-val_acc_facets.jpeg', device='jpeg')
   
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_acc, color=nhid), fun.y='mean', geom='line')
@@ -36,49 +36,49 @@ ggplot(param.summ, aes(x=epoch)) +
        x='Number of epochs',
        y='Accuracy on validation set') +
   theme(plot.title = element_text(hjust = 0.5)) +
-  # ggsave('epoch-val_acc_nlayers.pdf', device='pdf')
-  ggsave('epoch-val_acc_nlayers.jpeg', device='jpeg')
+  # ggsave('analysis/epoch-val_acc_nlayers.pdf', device='pdf')
+  ggsave('analysis/epoch-val_acc_nlayers.jpeg', device='jpeg')
 
 ## loss
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_loss, color=emsize), fun.y='mean', geom='line') +
-  ggsave('epoch-val_loss-emsize.pdf', device='pdf')
+  ggsave('analysis/epoch-val_loss-emsize.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_loss, color=nhid), fun.y='mean', geom='line') +
-  ggsave('epoch-val_loss-nhid.pdf', device='pdf')
+  ggsave('analysis/epoch-val_loss-nhid.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_loss, color=nlayers), fun.y='mean', geom='line') +
-  ggsave('epoch-val_loss-nlayers.pdf', device='pdf')
+  ggsave('analysis/epoch-val_loss-nlayers.pdf', device='pdf')
 
 ## f-score
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_f, color=emsize), fun.y='mean', geom='line') +
-  ggsave('epoch-val_f-emsize.pdf', device='pdf')
+  ggsave('analysis/epoch-val_f-emsize.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_f, color=nhid), fun.y='mean', geom='line') +
-  ggsave('epoch-val_f-nhid.pdf', device='pdf')
+  ggsave('analysis/epoch-val_f-nhid.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=val_f, color=nlayers), fun.y='mean', geom='line') +
-  ggsave('epoch-val_f-nlayers.pdf', device='pdf')
+  ggsave('analysis/epoch-val_f-nlayers.pdf', device='pdf')
 
 
 
 ## training loss
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=train_loss, color=emsize), fun.y='mean', geom='line') +
-  ggsave('epoch-train_loss-emsize.pdf', device='pdf')
+  ggsave('analysis/epoch-train_loss-emsize.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=train_loss, color=nhid), fun.y='mean', geom='line') +
-  ggsave('epoch-train_loss-nhid.pdf', device='pdf')
+  ggsave('analysis/epoch-train_loss-nhid.pdf', device='pdf')
 
 ggplot(param.summ, aes(x=epoch)) +
   stat_summary(aes(y=train_loss, color=nlayers), fun.y='mean', geom='line') +
-  ggsave('epoch-train_loss-nlayers.pdf', device='pdf')
+  ggsave('analysis/epoch-train_loss-nlayers.pdf', device='pdf')
 
 
 
@@ -90,11 +90,14 @@ ggplot(param.summ) +
 
 ################### ALSO INCLUDE SPEAKER ############################
 
-param.summ.speaker <- read_csv('summary_all_speaker.csv')
+param.summ.speaker <- read_csv('results/include_speaker/summary.txt')
+param.summ.speaker <- merge(param.summ.speaker, param.summ, all=TRUE)
 param.summ.speaker$emsize <- as.factor(param.summ.speaker$emsize)
 param.summ.speaker$nhid <- as.factor(param.summ.speaker$nhid)
 param.summ.speaker$nlayers <- as.factor(param.summ.speaker$nlayers)
 summary(param.summ.speaker)
+
+param.summ.speaker <- subset(param.summ.speaker, nhid=='64' && emsize=='500' && nlayers=='1000')
 
 ## accuracy  
 ggplot(param.summ.speaker, aes(x=epoch)) +
@@ -103,8 +106,8 @@ ggplot(param.summ.speaker, aes(x=epoch)) +
        x='Number of epochs',
        y='Accuracy on validation set (%)') +
   theme(plot.title = element_text(hjust = 0.5)) +
-  # ggsave('epoch-val_acc_all.pdf', device='pdf')
-  ggsave('epoch-val_acc_all.jpeg', device='jpeg')
+  # ggsave('analysis/epoch-val_acc_all.pdf', device='pdf')
+  ggsave('analysis/epoch-val_acc_all.jpeg', device='jpeg')
 
 ## loss
 ggplot(param.summ.speaker, aes(x=epoch)) +
@@ -113,8 +116,8 @@ ggplot(param.summ.speaker, aes(x=epoch)) +
      x='Number of epochs',
      y='Loss on validation set') +
   theme(plot.title = element_text(hjust = 0.5)) +
-  # ggsave('epoch-val_loss_all.pdf', device='pdf')
-  ggsave('epoch-val_loss_all.jpeg', device='jpeg')
+  # ggsave('analysis/epoch-val_loss_all.pdf', device='pdf')
+  ggsave('analysis/epoch-val_loss_all.jpeg', device='jpeg')
 
 ## f-score
 ggplot(param.summ.speaker, aes(x=epoch)) +
@@ -123,5 +126,5 @@ ggplot(param.summ.speaker, aes(x=epoch)) +
        x='Number of epochs',
        y='F-score on validation set') +
   theme(plot.title = element_text(hjust = 0.5)) +
-  # ggsave('epoch-val_f_all.pdf', device='pdf')
-  ggsave('epoch-val_f_all.jpeg', device='jpeg')
+  # ggsave('analysis/epoch-val_f_all.pdf', device='pdf')
+  ggsave('analysis/epoch-val_f_all.jpeg', device='jpeg')
