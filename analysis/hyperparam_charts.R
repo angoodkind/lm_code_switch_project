@@ -1,5 +1,4 @@
 library(tidyverse)
-library(gridExtra)
 
 param.summ <- read_csv('results/hyperparameter/summary.txt')
 param.summ$emsize <- as.factor(param.summ$emsize)
@@ -178,6 +177,7 @@ ggsave("analysis/charts/context/epoch-val-loss.jpeg", cont.loss + labs(color='Am
 
 param.summ.rnn <- read_csv('results/rnns/summary.txt')
 param.summ.rnn <- merge(param.summ.rnn, param.summ.optimal, all=TRUE)
+param.summ.rnn <- subset(param.summ.rnn, model != 'RNN_RELU') # These units don't report loss for some reason
 
 ## accuracy 
 rnn.acc = ggplot(param.summ.rnn, aes(x=epoch)) +
