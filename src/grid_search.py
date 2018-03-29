@@ -26,7 +26,7 @@ if not os.path.exists(results_dir):
 
 grid_args = {
     'data': gs_args.data,
-    'model': 'RNN_RELU'',
+    'model': ['RNN_RELU', 'RNN_TANH'],
     'epochs': 40,
     'emsize': 500,
     'nhid': 64,
