@@ -1,6 +1,6 @@
 library(tidyverse)
 
-param.summ <- read_csv('hyperparameter/summary_compact.csv')
+param.summ <- read_csv('results/hyperparameter/summary.txt')
 param.summ$emsize <- as.factor(param.summ$emsize)
 param.summ$nhid <- as.factor(param.summ$nhid)
 param.summ$nlayers <- as.factor(param.summ$nlayers)
@@ -19,7 +19,7 @@ ggplot(param.summ, aes(x=epoch, y=val_acc, color=emsize, group=interaction(condi
   facet_grid(nlayers ~ nhid, labeller=labeller(nlayers=labels_layers,
                                                nhid=labels_hid)) +
   labs(title='Accuracy on validation set by epochs
-       By EM Size, Hidden Layers and Unit Count',
+       By embedding size, LSTM layer size and number of LSTM layers',
        x='Number of epochs',
        y='Accuracy on validation set') +
   theme(plot.title = element_text(hjust = 0.5)) +
