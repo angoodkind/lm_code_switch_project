@@ -173,3 +173,36 @@ cont.f = ggplot(param.summ.context, aes(x=epoch)) +
 ggsave("analysis/charts/context/epoch-val-acc.jpeg", cont.acc + guides(color=FALSE), width=2.25, height=2)
 ggsave("analysis/charts/context/epoch-val-f.jpeg", cont.f + guides(color=FALSE), width=2.25, height=2)
 ggsave("analysis/charts/context/epoch-val-loss.jpeg", cont.loss + labs(color='Amount of context') + scale_color_manual(labels = c("Current utterance", "Full discourse"), values = c("#F8766D", "#00BFC4")), width=3.375, height=2)
+
+################### RNN COMPARISON ############################
+
+param.summ.rnn <- read_csv('results/rnns/summary.txt')
+param.summ.rnn <- merge(param.summ.rnn, param.summ.optimal, all=TRUE)
+
+## accuracy 
+rnn.acc = ggplot(param.summ.rnn, aes(x=epoch)) +
+  aes(y=val_acc, color=model, group=save) + geom_line() +
+  labs(title='Accuracy',
+       x='Number of epochs',
+       y='Proportion correct\non validation set') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+## loss
+rnn.loss = ggplot(param.summ.rnn, aes(x=epoch)) +
+  aes(y=val_loss, color=model, group=save) + geom_line() +
+  labs(title='Loss',
+       x='Number of epochs',
+       y='Loss\non validation set') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+## f-score
+rnn.f = ggplot(param.summ.rnn, aes(x=epoch)) +
+  aes(y=val_f, color=model, group=save) + geom_line() +
+  labs(title='F-score',
+       x='Number of epochs',
+       y='F-score\non validation set') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave("analysis/charts/rnn/epoch-val-acc.jpeg", rnn.acc + guides(color=FALSE), width=2.25, height=2)
+ggsave("analysis/charts/rnn/epoch-val-f.jpeg", rnn.f + guides(color=FALSE), width=2.25, height=2)
+ggsave("analysis/charts/rnn/epoch-val-loss.jpeg", rnn.loss + labs(color='Recurrent Unit Type'), width=3.375, height=2)
