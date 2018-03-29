@@ -11,8 +11,15 @@ Much of this code was based on:
 
 ## Dependencies
 
+### Experiment
+
 * Python 3
 * [pytorch](http://pytorch.org/)
+
+### Analysis
+
+* R
+* tidyverse package for R
 
 ## Preprocessing the data
 
@@ -46,6 +53,8 @@ To run a single set of parameters, simply run `src/main.py` with parameter setti
 - `--cuda` = use CUDA
 - `--log-interval` = report interval
 - `--save` = path where to save the final model
+- `--ignore_speaker` = whether ignore/mask speaker information during training (default false)
+- `--full_context` = whether to use the full context when making predictions (default false); this will make the model run faster
 
 To run a grid search on several parameters, all you need to do is edit the variables in `src/grid_search.py`, and then run that file. Grid search has a couple of parameters configurable from the command line, too:
 
